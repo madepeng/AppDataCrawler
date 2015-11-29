@@ -1,0 +1,48 @@
+package com.crawler.test;
+
+
+  
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.firefox.FirefoxDriver;
+  
+  
+  
+public class testbaidu {  
+  
+    /** 
+     * @param args 
+     */  
+    public static void main(String[] args) {  
+        // TODO Auto-generated method stub  
+        //设置浏览器driver  
+        WebDriver driver;  
+        driver=new FirefoxDriver();  
+          
+        //打开百度的首页  
+      /*  driver.get("http://www.baidu.com");  
+          
+        //找到输入框，输入“北京博测科技”，并单击百度一下按钮  
+        driver.findElement(By.id("kw")).clear();  
+        driver.findElement(By.id("kw")).sendKeys("北京博测科技");  
+          
+        driver.findElement(By.id("su")).click();  
+          
+        //关闭浏览器  
+        driver.close();  */
+          
+        driver.get("http://zhushou.360.cn/detail/index/soft_id/77208");
+        //SeleniumDownloader.setSleepTime();
+        //WebElement webElement = driver.findElement(By.xpath("/html"));
+        //System.out.println(webElement.getAttribute("outerHTML"));
+       // driver.close();
+        WebElement web1 = driver.findElement(By.id("top"));
+        WebElement web2 = driver.findElement(By.className("js-comments review-count-all"));
+       // WebElement web = (WebElement) driver.findElements(By.className("pf"));
+        System.out.println(web1.getText());
+        System.out.println(web2.getText());
+          
+    }  
+  
+}  

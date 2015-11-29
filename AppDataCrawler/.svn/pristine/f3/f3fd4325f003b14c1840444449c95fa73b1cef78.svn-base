@@ -1,0 +1,69 @@
+﻿package com.crawler.main.sanliuling;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+public class sortUrl {
+	ArrayList<String> sortUrl = new ArrayList<String>();
+	//这个数组才有用，保存的是有效的地址分类
+	List<String> sortUrl2 = new ArrayList<String>();
+	 
+	public static void main(String[] args) throws IOException{
+		
+		String url = "http://zhushou.360.cn/list/index/cid/2";//游戏的分类入口地址 
+		String url2 = "http://zhushou.360.cn/list/index/cid/1";//装软件的分类入口地址
+		sortUrl gamesort =new sortUrl(url);//调用构造方法获得游戏分类地址
+		sortUrl software = new sortUrl(url2);//调用构造方法获得软件分类地址
+		appInfo test = new appInfo();
+		appInfo test2 = new appInfo();
+		//默认给定的页面最大数为50
+		System.out.println(gamesort.sortUrl.size());
+		System.out.println(gamesort.sortUrl2.size());
+		for(int i=0;i<gamesort.sortUrl2.size();i++){
+			test.eachPageUrl(gamesort.sortUrl2.get(i),50);//根据分类的地址，默认每个分类下有50页，传进分类地址，把每一页都分出来
+		}
+		System.out.println(test.appUrl);
+		
+		for(int i=0;i<software.sortUrl2.size();i++){
+			test2.eachPageUrl(software.sortUrl2.get(i),50);
+		}
+		System.out.println(test2.appUrl);
+		
+		for(int i=0;i<test.usefulAppUrl.size();i++){
+//			System.out.println(test.usefulAppUrl.get(i));
+			eachAppInfo appInfoTest=new eachAppInfo(test.usefulAppUrl.get(i));
+		}
+		
+		for(int i=0;i<test2.usefulAppUrl.size();i++){
+//			System.out.println(test.usefulAppUrl.get(i));
+			eachAppInfo appInfoTest=new eachAppInfo(test2.usefulAppUrl.get(i));
+		}
+//		test.eachPageUrl("http://zhushou.360.cn/list/index/cid/101587/", 49);
+	}
+	//获取游戏分类下的所有类型的地址或者是装软件分类下的所有应用
+	sortUrl(String url) throws IOException{
+		Document doc = Jsoup.connect(url).timeout(3000).get();
+		Elements links = doc.getElementsByAttributeValue("class", "select").select("a");
+		for(Element link : links){
+			sortUrl.add(link.absUrl("href"));
+//			System.out.println(link.text()+link.absUrl("href"));
+		}
+		//sorUrl从1到9保存的是分类的地址
+		sortUrl2=sortUrl.subList(1,sortUrl.size()-3);
+		//去掉中文版之类的地址
+		for(int i=0 ; i<sortUrl2.size() ; i++){
+			if(sortUrl2.get(i).contains("#")){
+				sortUrl2.remove(i);
+			}
+		}
+//		System.out.println(sortUrl2);
+		
+	}
+
+}

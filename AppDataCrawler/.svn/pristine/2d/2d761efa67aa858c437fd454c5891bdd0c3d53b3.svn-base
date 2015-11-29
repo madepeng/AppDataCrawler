@@ -1,0 +1,149 @@
+package com.crawler.main.yingyongbao;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Date;
+
+import net.sf.json.JSONObject;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import com.crawler.util.DateUtil;
+
+public class getAppProperty {
+	
+	//数据库配置
+		private static final String DRIVERNAME="com.mysql.jdbc.Driver";  
+	    private static final String URL="jdbc:mysql://localhost:3306/appdata?useUnicode=true&characterEncoding=utf-8";  
+	    private static final String USERNAME="root";  
+	    private static final String PASSWORD="root"; 
+	
+	String appName = null;
+	String rating = null;
+	String downloadNum = null;
+	String size = null;
+	String Classification = null;
+	String appInfo = null;
+	String version = null;
+	String downloadUrl = null;
+	
+	public static Connection getConnection(){  
+        Connection conn=null;  
+          
+        try {  
+            Class.forName(DRIVERNAME);  
+            conn=DriverManager.getConnection(URL,USERNAME,PASSWORD);  
+              
+           // System.out.print(conn.toString());  
+        } catch (ClassNotFoundException e) {  
+            e.printStackTrace();  
+        } catch (SQLException e) {  
+            e.printStackTrace();  
+        }         
+        return conn;  
+    }//Connection
+	
+	
+	public void getProperty(String appUrl,String reviewsUrl) {
+		
+		try {
+			Document doc = Jsoup.connect(appUrl).timeout(90000).get();
+		   
+			 appName = doc.select("div.det-name-int").text();
+			
+			 rating = doc.select("div.com-blue-star-num").text();
+			
+			 Document reviewDoc = Jsoup.connect(reviewsUrl).timeout(90000).ignoreContentType(true).ignoreHttpErrors(true).get();
+			 String str = reviewDoc.body().text();
+			 JSONObject jsonObj = JSONObject.fromObject(str);
+			 String str1 =  jsonObj.getString("obj");
+			 //System.out.println(str1);
+			 JSONObject jsonObj1 = JSONObject.fromObject(str1);
+			 String reviewNum = jsonObj1.getString("total");
+			/*String reviewNum = doc.select("a.det-comment-num").text();
+			System.out.println(reviewNum);*/
+			
+			 downloadNum = doc.select("div.det-ins-num").text();
+			 if (downloadNum.contains("万")) {
+					//downloadNum = downloadNum.replace("万", "0000");
+				    Double r = Double.parseDouble(downloadNum.substring(0, downloadNum.length()-1))*10000;
+				    downloadNum = (new BigDecimal(r)).toString();
+				}else if (downloadNum.contains("亿")) {
+					Double r = Double.parseDouble(downloadNum.substring(0, downloadNum.length()-1))*1000000000;
+					downloadNum = (new BigDecimal(r)).toString();
+				}
+			
+			 size = doc.select("div.det-size").text();
+			
+			/*String adStatus = doc.select("div#J_AdvBox").text();
+			System.out.println(adStatus);*/
+			
+			 Classification = doc.select("a#J_DetCate").text();
+			
+			 appInfo = doc.select("div.det-app-data-info").text();
+			
+			 version = doc.select("div.det-othinfo-data").first().text();
+			
+			/*String updateTime = doc.select("div#J_ApkPublishTime").text();
+			System.out.println(updateTime);*/
+			
+			 downloadUrl=doc.select("a").attr("data-apkurl");
+			 
+			//抓取时间
+			 Date date = new Date();
+			 DateUtil dateUtil = new DateUtil();
+			 String crawleDate = DateUtil.formatStandardDate(date);
+		     
+			 //get database connection
+			 Connection conn = getConnection();
+			 
+			 String sql = "select appname,version,crawledate from yingyongbao where appname='"+appName+"' and version='"+version+"' and crawledate='"+crawleDate+"'";
+			 try {
+				Statement stmt = conn.createStatement();
+				ResultSet rs = stmt.executeQuery(sql);
+				if (!(rs.next())) {
+					//插入数据库
+					
+					 java.sql.PreparedStatement insertSales = null;
+					try {
+						insertSales = conn.prepareStatement("insert into yingyongbao (appname,rating,downloadnum,size,classification,appinfo,version,downloadurl,crawledate,reviewnum) values (?,?,?,?,?,?,?,?,?,?)");
+						 insertSales.setString(1, appName);
+						 insertSales.setString(2, rating);
+						 insertSales.setString(3, downloadNum);
+						 insertSales.setString(4, size);
+						 insertSales.setString(5, Classification);
+						 insertSales.setString(6, appInfo);
+						 insertSales.setString(7, version);
+						 insertSales.setString(8, downloadUrl);
+						 insertSales.setString(9, crawleDate);
+						 insertSales.setString(10, reviewNum);
+						 insertSales.executeUpdate();
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}finally{
+						try {
+							conn.close();
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+}

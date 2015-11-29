@@ -1,0 +1,33 @@
+package com.test.sanliuling;
+
+import java.io.IOException;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+public class Test {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		Document doc;
+		try {
+			doc = Jsoup.connect("http://openbox.mobilem.360.cn/detail/rank?&cid=11&start=20&num=20").timeout(9000).get();
+			System.out.println(doc);
+			JSONArray jsonArr = JSONArray.fromObject(doc.body().text());
+			System.out.println(jsonArr);
+			String s=jsonArr.getString(0);
+			System.out.println(s);
+			JSONObject jsonObj = JSONObject.fromObject(s);
+			String s1 = jsonObj.getString("soft_id");
+			System.out.println(s1);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+}

@@ -1,0 +1,29 @@
+package com.crawler.test;
+
+import java.io.IOException;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import com.crawler.main.wandoujia.HtmlUnitTool;
+
+public class Clikc {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		try {
+			Document doc = Jsoup.connect("http://www.wandoujia.com/tag/%E8%A7%86%E9%A2%91").timeout(90000).get();
+			System.out.println(doc.select("div.load-more").select("a").attr("href"));
+			String s = doc.select("div.load-more").select("a").attr("href");
+			Document doc1 = Jsoup.connect(s).timeout(90000).get();
+			System.out.println(doc1);
+			
+			System.out.println(doc.select("a.j-refresh-btn"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+}

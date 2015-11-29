@@ -1,0 +1,165 @@
+﻿package com.crawler.main.sanliuling;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Date;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import com.crawler.util.DateUtil;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
+public class eachAppInfo {
+	
+	//数据库配置
+	private static final String DRIVERNAME="com.mysql.jdbc.Driver";  
+    private static final String URL="jdbc:mysql://localhost:3306/appdata?useUnicode=true&characterEncoding=utf-8";  
+    private static final String USERNAME="root";  
+    private static final String PASSWORD="root"; 
+    
+    public static Connection getConnection(){  
+        Connection conn=null;  
+          
+        try {  
+            Class.forName(DRIVERNAME);  
+            conn=DriverManager.getConnection(URL,USERNAME,PASSWORD);  
+              
+           // System.out.print(conn.toString());  
+        } catch (ClassNotFoundException e) {  
+            e.printStackTrace();  
+        } catch (SQLException e) {  
+            e.printStackTrace();  
+        }         
+        return conn;  
+    }//Connection
+    
+    
+	//抓取具体某个应用的详细属性
+	eachAppInfo(String url) throws FailingHttpStatusCodeException, MalformedURLException, IOException{
+		 /**HtmlUnit请求web页面*/  
+        WebClient wc = new WebClient();  
+        wc.getOptions().setJavaScriptEnabled(false); //启用JS解释器，默认为true  
+        wc.getOptions().setCssEnabled(false); //禁用css支持  
+        wc.getOptions().setThrowExceptionOnScriptError(false); //js运行错误时，是否抛出异常  
+        wc.getOptions().setTimeout(10000); //设置连接超时时间 ，这里是10S。如果为0，则无限期等待  
+        HtmlPage page = wc.getPage(url);
+//        HtmlPage page = wc.getPage("http://android.myapp.com/myapp/detail.htm?apkName=com.tencent.mobileqq");  
+        String pageXml = page.asXml(); //以xml的形式获取响应文本  
+  
+        /**jsoup解析文档*/  
+        Document docs = Jsoup.parse(pageXml, url); 
+//System.out.println(docs);
+ 
+       //获取名字
+		String appName=docs.select("div.product").select("h2").text();
+		System.out.println("appname:"+appName);
+		
+		//获取评分
+        String starNum=docs.select("span.s-1").text().split(" ")[0];
+	     System.out.println("starNum:"+starNum);
+	     
+	     //评论数
+	     String commentNum=docs.select("span.js-comments").text();
+	     System.out.println("commentNum:"+commentNum);
+	     
+	     //下载量
+	     String downloadNum=docs.select("span.s-3").first().text().substring(3);
+	     System.out.println("downloadNum:"+downloadNum);
+		
+	     //获取大小
+	     String size=docs.select("span.s-3").eq(1).text();
+	     System.out.println("size:"+size);
+	     
+	     //开发者
+	     String developer=docs.select("div.base-info").select("td").first().text().substring(3);
+	     System.out.println("developer:"+developer);
+	     
+//	     //分类
+//	     String sort=docs.select("p.special-font").text().split("分类：")[1].trim().split("支持：")[0];
+//	     System.out.println(sort.substring(0, sort.length()-2));
+	          
+	     //更新时间
+	     String updateTime=docs.select("div.base-info").select("td").eq(1).text().substring(5).trim();
+ 		 System.out.println("updateTime:"+updateTime);
+		 
+	     //版本号
+	     String version=docs.select("div.base-info").select("td").eq(2).text().substring(3).trim();
+	     System.out.println("version:"+version);
+	     
+//	   //权限详情
+//	     String remarkNum=docs.select("ul.second-ul").text().replaceAll(" ? ", "");
+//	     System.out.println(remarkNum);
+	    	     
+
+//	     //介绍
+//	     String describeInfor=docs.select("div#html-brief").text();
+//		 System.out.println(describeInfor);	    
+		 
+	     //更新内容
+		 String updateInfo=docs.select("div.html-brief").text();
+		 System.out.println("updateInfo:"+updateInfo);
+		 
+		 //获取下载地址
+		 String download = url+docs.select("a.js-downLog").select("a").attr("href");
+		 System.out.println("download:"+download);
+		 
+		 //抓取时间
+		 Date date = new Date();
+		 DateUtil dateUtil = new DateUtil();
+		 //String crawleDate = DateUtil.formatStandardDateTime(date);
+		 String crawleDate = DateUtil.formatStandardDate(date);
+		 
+		 //get database connection
+		 Connection conn = getConnection();
+		 
+		 String sql = "select appname,version,crawledate from wandoujiagame where appname='"+appName+"' and version='"+version+"' and crawledate='"+crawleDate+"'";
+		 try {
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(sql);
+			if (!(rs.next())) {
+				//插入数据库
+				
+				 java.sql.PreparedStatement insertSales = null;
+				try {
+					insertSales = conn.prepareStatement("insert into sanliuling (appname,starnum,commentnum,downloadnum,size,updatetime,version,updateinfo,downurl,crawledate) values (?,?,?,?,?,?,?,?,?,?)");
+					 insertSales.setString(1, appName);
+					 insertSales.setString(2, starNum);
+					 insertSales.setString(3, commentNum);
+					 insertSales.setString(4, downloadNum);
+					 insertSales.setString(5, size);
+					 insertSales.setString(6, updateTime);
+					 insertSales.setString(7, version);
+					 insertSales.setString(8, updateInfo);
+					 insertSales.setString(9, download);
+					 insertSales.setString(10, crawleDate);
+					 insertSales.executeUpdate();
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}finally{
+					try {
+						conn.close();
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		 
+		 
+		 
+		 
+	}
+}

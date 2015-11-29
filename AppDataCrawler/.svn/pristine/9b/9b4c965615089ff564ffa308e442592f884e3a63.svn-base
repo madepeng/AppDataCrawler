@@ -1,0 +1,53 @@
+﻿package com.crawler.main.sanliuling;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+public class appInfo {
+	//实现
+	ArrayList<String> appUrl = new ArrayList<String>();
+	//去掉重复值以后的真正有用的数组，用来存放每个app页面的地址，地址是作为抽取所有app属性的入口
+	ArrayList<String> usefulAppUrl = new ArrayList<String>();
+
+	
+	
+//应用是按页显示app信息，以下实现的是根据每页的地址，打开后获得该页上所有app的地址
+	void eachPageAppUrl(String url2) throws IOException{
+		Document doc = Jsoup.connect(url2).timeout(60000).get();
+		Elements urls = doc.getElementById("iconList").select("a");
+		int i = 0;
+		for(Element url1 : urls){
+			url1.absUrl("href");
+//			System.out.println(url1.absUrl("href"));
+			if(i%3==0){
+				appUrl.add(url1.absUrl("href"));
+			}
+			i++;
+		}
+		usefulAppUrl=new ArrayList(new HashSet(appUrl));
+		
+//		for(i=0;i<appUrl.size();i++){
+//			System.out.println(appUrl.get(i));
+//		}
+//		System.out.println("----------------------------------------------");
+	}
+	//每一类型的页数都不一样，把该类型的地址和总页数作为参数传递进来
+	void eachPageUrl(String url,int pages) throws IOException{
+//		appInfo test = new appInfo();
+		url = url + "?page=";
+		for(int i=1;i<pages+1;i++){
+			String url24;
+			url24=url+i;
+//			System.out.println(url24);
+//			test.eachPageAppUrl(url24);
+			eachPageAppUrl(url24);
+		}
+	}
+}

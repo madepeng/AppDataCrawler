@@ -1,0 +1,28 @@
+package com.crawler.main.wandoujia;
+
+public class Reviews {
+	
+	String reviewer;
+	String reviewTime;
+	String reviewContent;
+	public String getReviewer() {
+		return reviewer;
+	}
+	public void setReviewer(String reviewer) {
+		this.reviewer = reviewer;
+	}
+	public String getReviewTime() {
+		return reviewTime;
+	}
+	public void setReviewTime(String reviewTime) {
+		this.reviewTime = reviewTime;
+	}
+	public String getReviewContent() {
+		return reviewContent;
+	}
+	public void setReviewContent(String reviewContent) {
+		this.reviewContent = reviewContent;
+	}
+	
+	
+}

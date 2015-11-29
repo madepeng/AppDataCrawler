@@ -1,0 +1,143 @@
+package com.crawler.main.baidu;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Date;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.crawler.util.DateUtil;
+
+public class getUrl {
+	//数据库配置
+		private static final String DRIVERNAME="com.mysql.jdbc.Driver";  
+	    private static final String URL="jdbc:mysql://localhost:3306/appdata?useUnicode=true&characterEncoding=utf-8";  
+	    private static final String USERNAME="root";  
+	    private static final String PASSWORD="root"; 
+	    
+	    public static Connection getConnection(){  
+	        Connection conn=null;  
+	          
+	        try {  
+	            Class.forName(DRIVERNAME);  
+	            conn=DriverManager.getConnection(URL,USERNAME,PASSWORD);  
+	              
+	           // System.out.print(conn.toString());  
+	        } catch (ClassNotFoundException e) {  
+	            e.printStackTrace();  
+	        } catch (SQLException e) {  
+	            e.printStackTrace();  
+	        }         
+	        return conn;  
+	    }//Connection
+	
+		public void getUrl() {
+			
+			
+			try {
+				Document doc = Jsoup.connect("http://shouji.baidu.com/software/?from=as").timeout(900000).get();
+				Elements eles = doc.select("div#doc").select("ul.cate-body").select("li").select("a");
+				for (Element element : eles) {
+					//System.out.println(element.attr("abs:href"));
+					String url = element.attr("abs:href");
+					
+						for (int  i= 1;; i++) {
+							Document doc1 = Jsoup.connect(url+"&page_num="+i).timeout(900000).get();
+							Elements eles1 = doc1.select("div.app-box").select("a");
+							if (eles1.size() ==0) {
+								break;
+							}
+							for (Element element1 : eles1) {
+								System.out.println(element1.attr("abs:href"));
+								String appurl = element1.attr("abs:href");
+								
+								Document doc2 = Jsoup.connect(appurl).timeout(900000).get();
+								
+								String appName = doc2.select("h1.app-name").text();
+								
+								String rating = doc2.select("span.star-percent").attr("style").split(":")[1];
+								
+								String size = doc2.select("span.size").first().text().split(":")[1];
+								
+								String version = null;
+								String[] versionorign = doc2.select("span.version").text().split(":");
+								if (versionorign.length == 2) {
+									version = versionorign[1];
+								}
+								//String version = doc2.select("span.version").text().split(":")[1];
+								
+								String downloadNum = doc2.select("span.download-num").text().split(":")[1];
+								
+								String downloadUrl = doc2.select("a.apk").attr("href");
+								
+								 //抓取时间
+								 Date date = new Date();
+								 DateUtil dateUtil = new DateUtil();
+								 //String crawleDate = DateUtil.formatStandardDateTime(date);
+								 String crawleDate = DateUtil.formatStandardDate(date);
+								 
+								 
+								 //get database connection
+								 Connection conn = getConnection();
+								 
+								 String sql = "select appname,version,crawledate from baidu where appname='"+appName+"' and version='"+version+"' and crawledate='"+crawleDate+"'";
+								 try {
+									Statement stmt = conn.createStatement();
+									ResultSet rs = stmt.executeQuery(sql);
+									if (!(rs.next())) {
+										//插入数据库
+										
+										 java.sql.PreparedStatement insertSales = null;
+										try {
+											insertSales = conn.prepareStatement("insert into baidu (appname,rating,size,version,downloadnum,downloadurl,crawledate) values (?,?,?,?,?,?,?)");
+											 insertSales.setString(1, appName);
+											 insertSales.setString(2, rating);
+											 insertSales.setString(3, size);
+											 insertSales.setString(4, version);
+											 insertSales.setString(5, downloadNum);
+											 insertSales.setString(6, downloadUrl);
+											 insertSales.setString(7, crawleDate);
+											 insertSales.executeUpdate();
+										} catch (SQLException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
+										}finally{
+											try {
+												conn.close();
+											} catch (SQLException e) {
+												// TODO Auto-generated catch block
+												e.printStackTrace();
+											}
+										}
+									}
+								} catch (SQLException e1) {
+									// TODO Auto-generated catch block
+									e1.printStackTrace();
+								}
+								 
+							}
+					
+						
+						
+						
+					
+						
+					} 
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+			
+			
+		}
+	
+

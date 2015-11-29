@@ -1,0 +1,65 @@
+package com.crawler.test;
+import com.crawler.main.wandoujia.*;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.crawler.main.wandoujia.HtmlUnitTool;
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+
+public class Test360 {
+
+	public static void main(String[] args) throws FailingHttpStatusCodeException, MalformedURLException{
+		// TODO Auto-generated method stub
+			try {
+				Document doc = Jsoup.connect("http://zhushou.360.cn/list/index/cid/11/").timeout(90000).get();
+				Elements ele = doc.select("ul#iconList").select("li");
+				System.out.println(ele.size());
+				for (Element element : ele) {
+					//System.out.println(element.select("a").first().attr("abs:href"));
+					
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			/*WebClient wc = new WebClient();  
+			wc.getOptions().setJavaScriptEnabled(false); //启用JS解释器，默认为true  
+			wc.getOptions().setCssEnabled(false); //禁用css支持  
+			wc.getOptions().setThrowExceptionOnScriptError(false); //js运行错误时，是否抛出异常  
+			wc.getOptions().setTimeout(10000); //设置连接超时时间 ，这里是10S。如果为0，则无限期等待  
+			HtmlPage page = wc.getPage("http://zhushou.360.cn/detail/index/soft_id/770");
+//		        HtmlPage page = wc.getPage("http://android.myapp.com/myapp/detail.htm?apkName=com.tencent.mobileqq");  
+			String pageXml = page.asXml(); //以xml的形式获取响应文本  
+*/		  
+			HtmlUnitTool tool = new HtmlUnitTool();
+			String page = tool.getPageByUnit("http://zhushou.360.cn/detail/index/soft_id/95487");
+			//System.out.println(page);
+			/**jsoup解析文档*/  
+		Document doc1 = Jsoup.parse(page); 
+		System.out.println(doc1.body());
+			//Document doc1 = Jsoup.connect("http://zhushou.360.cn/detail/index/soft_id/770").timeout(90000).get();
+			String appName = doc1.select("span.title").text();
+			System.out.println(appName);
+			
+			String rating = doc1.getElementsByAttributeValue("class", "s-1 js-votepanel").text();
+			System.out.println(rating);
+			
+			String reviewNum = doc1.select("span.review-count-all").text();
+			System.out.println(reviewNum);
+			
+		/*	String downloadNum = doc1.select("span.s-3").first().text().split(":")[1];
+			System.out.println(downloadNum);*/
+			
+			String size = doc1.select("span.s-3").get(1).text();
+		System.out.println(size);
+			
+	}
+
+}

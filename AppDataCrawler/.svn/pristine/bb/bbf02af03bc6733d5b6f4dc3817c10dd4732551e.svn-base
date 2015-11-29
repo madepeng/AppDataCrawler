@@ -1,0 +1,206 @@
+﻿package com.crawler.main.wandoujia;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+
+public class WanApp {
+
+	/**
+	 * wandoujia
+	 * @param args
+	 */
+	
+	String url = "http://www.wandoujia.com/tag/app";
+	List<String> sorthrefs=new ArrayList<String>();
+	List<String> sorturls=new ArrayList<String>();
+	List<String> eachAppUrls=new ArrayList<String>();
+	List<String> eachPageApp=new ArrayList<String>();
+	
+	
+	public static void main(String[] args) {
+		WanApp app = new WanApp();
+		WanGame game = new WanGame();
+		try {
+			app.appSort();
+			app.eachAppUrl();
+			game.getAppSort();
+			game.getAllAppUrl();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
+//获取软件分类中所有类别的url
+	public void appSort() throws IOException{
+		
+		Document doc=Jsoup.connect(url).timeout(60000).get();
+		Element content=doc.getElementsByAttributeValue("class", "clearfix tag-box").first();
+//System.err.println(content);
+		Elements links=content.getElementsByTag("a").select(".cate-link");
+//System.err.println(links);
+		for(Element link: links){
+			String sorthref=link.attr("href");
+			sorthrefs.add(sorthref);
+//System.out.println(sorthrefs);	
+		}
+		int x = sorthrefs.size();
+System.out.println("软件分类有:"+x+"种");
+		for(int i=0;i<x;i++){
+			String sorturl=sorthrefs.get(i);
+		    //输出所有分类的地址，一共18个,http://apk.hiapk.com/apps/AntiVirus
+			
+System.out.println(sorturl);
+         
+//将地址中的汉字解析掉
+           String s1 = URLEncoder.encode(sorturl.split("tag/")[1], "utf-8");
+// System.err.println(s1);
+			sorturls.add(s1);
+		}
+	} 
+
+	//获取所有app的地址
+	public void eachAppUrl(){
+		try{
+	    for(int i=0;i<sorturls.size();i++){
+			Document everysort=Jsoup.connect("http://www.wandoujia.com/tag/"+sorturls.get(i)).timeout(60000).get();
+			Elements eachapp=everysort.getElementsByAttributeValue("class","app-desc");
+			for(Element tags:eachapp){
+				Elements tag=tags.getElementsByTag("a");
+				for(Element attrs:tag){
+					String eachAppUrl=attrs.attr("href");
+					eachAppUrls.add(eachAppUrl);
+				}
+			}
+			
+		}
+	
+			for(String a:eachAppUrls){
+				System.err.println(a);
+			}
+			
+			for(int n=0;n<eachAppUrls.size();n++){
+				if(n%2==0){
+			getAppAttribution(n);
+				}
+			}
+		}catch(IOException e){
+			e.printStackTrace();
+		}
+	}
+	
+	public void getAppAttribution(int number){
+		
+      try{
+		Document docs=Jsoup.connect(eachAppUrls.get(number)).timeout(60000).get();
+		//获取名字
+		String appName=docs.select(".title").first().text();
+		System.out.println(appName);
+		
+		//获取下载量
+		 String downloadNum=docs.select(".item").first().select("i").text();
+	     System.out.println(downloadNum);
+		
+		 //获取评分
+	     String starNum=docs.select(".item").eq(1).select("i").text();
+	     System.out.println(starNum);
+	     
+	     //获取评论数
+	     String remarkNum=docs.select(".item").eq(2).select("i").text();
+	     System.out.println(remarkNum);
+	     
+	     //获取大小
+	     String size=docs.select(".infos-list").first().text().substring(2);
+	     size = size.split("分类")[0].trim();
+	     System.out.println(size);
+	     
+	   //所属类别
+	     String classification=docs.select("dd.tag-box").first().text();   
+	     System.out.println(classification);
+	     
+	     //更新时间
+	     String updatetime=docs.select("time[datetime]").first().text();
+ 		 System.out.println(updatetime);
+ 		 
+	     //版本号
+	     String version=docs.select("dd").eq(3).text();
+	     System.out.println(version);
+	     
+	     //要求
+	     String demand=docs.select("dd").eq(4).text();
+	     System.out.println(demand);
+	     
+	     //开发者
+	     String developer=docs.select("dd").eq(5).text();
+	     System.out.println(developer);
+	     
+	     //介绍
+	     String describeInfor=docs.select("div.con").eq(1).text();
+		 System.out.println(describeInfor);	    
+		 
+	     //更新内容
+		 String updateInfor=docs.select("div.con").eq(2).text();
+		 System.out.println(updateInfor);
+		 
+//	     //获取评论
+//	     String remarkName=docs.select("li.normal-li").text();
+//		 System.out.println(remarkName);
+    
+	     String download = docs.getElementsByAttributeValue("class", "install-btn").attr("href");
+	     System.out.println(download);
+	     
+	     //下载app到电脑上
+		 try {
+			download(download, appName+".apk");
+			System.out.println(appName+"download succeed");
+		 }catch (Exception e1) {
+			e1.printStackTrace();
+			System.out.println(appName+"download failed");
+		 }
+	     
+		
+	}catch(IOException e){
+		e.printStackTrace();
+	}
+}     
+public static void download(String urlString, String filename)throws Exception {// 下载应用
+	// 构造URL
+	URL url = new URL(urlString);
+	// 打开连接
+	URLConnection con = url.openConnection();
+	// 输入流
+	InputStream is = con.getInputStream();
+	// 1K的数据缓冲
+	byte[] bs = new byte[1024];
+	// 读取到的数据长度
+	int len;
+	// 输出的文件流
+	OutputStream os = new FileOutputStream(filename);
+	// 开始读取
+	while ((len = is.read(bs)) != -1) {
+		os.write(bs, 0, len);
+	}
+	// 完毕，关闭所有链接
+	os.close();
+	is.close();
+}
+
+
+		
+	}
+	
+

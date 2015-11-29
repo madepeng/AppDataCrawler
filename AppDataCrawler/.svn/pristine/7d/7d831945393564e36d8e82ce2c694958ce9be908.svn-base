@@ -1,0 +1,21 @@
+package com.crawler.test;
+
+import java.io.IOException;
+
+import com.crawler.main.wandoujia.WanApp;
+import com.crawler.main.wandoujia.WanGame;
+
+public class Test {
+
+	
+			
+	public static void main(String[] args) throws IOException {
+		// TODO Auto-generated method stub
+		WanGame wangame = new WanGame();
+		wangame.getAllAppUrl();
+			
+		WanApp wanapp = new WanApp();
+		wanapp.getAllAppUrl();
+	}
+
+}

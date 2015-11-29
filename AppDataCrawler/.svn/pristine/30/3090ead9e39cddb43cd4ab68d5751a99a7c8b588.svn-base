@@ -1,0 +1,14 @@
+package com.crawler.main.yingyongbao;
+
+public class MainApp {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+			//getAppUrl geturl = new getAppUrl();
+			//geturl.getAppUrl();
+		
+		getGameAppUrl getgame = new getGameAppUrl();
+		getgame.getAppUrl();
+	}
+
+}
